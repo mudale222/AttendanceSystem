@@ -11,12 +11,8 @@ using System.Windows.Forms;
 
 namespace dxcEx {
     public partial class LoginForm : Form {
-        System.Windows.Forms.Timer userTimer = null;
-        //TimeSpan userOnlineTime = new TimeSpan();
-        DateTime userConnectedTime = new DateTime();
         const string MyConString = "Data Source=(LocalDB)\\MSSQLLocalDB;AttachDbFilename=C:\\Users\\mudale\\source\\repos\\dxcEx\\dxcEx\\MainDb.mdf;Integrated Security=True;";
-
-
+        User user = new User();
         public LoginForm() {
             InitializeComponent();
         }
@@ -25,15 +21,14 @@ namespace dxcEx {
 
         }
         private void StartTimer() {
-            userTimer = new System.Windows.Forms.Timer();
-            userTimer.Interval = 1000;
-            userTimer.Tick += new EventHandler(t_Tick);
-            userTimer.Enabled = true;
-            userConnectedTime = DateTime.Now;
+            user.timer.Interval = 1000;
+            user.timer.Tick += new EventHandler(t_Tick);
+            user.timer.Enabled = true;
+            user.connectedTime = DateTime.Now;
         }
 
         void t_Tick(object sender, EventArgs e) {
-            var time_span = (DateTime.Now - userConnectedTime);
+            var time_span = (DateTime.Now - user.connectedTime);
             var hh = time_span.Hours;
             var mm = time_span.Minutes;
             var ss = time_span.Seconds;
@@ -50,38 +45,59 @@ namespace dxcEx {
                 connection.Open();
 
                 cmd.Parameters.AddWithValue("@userName", userName);
-                cmd.CommandText = "SELECT TOP 1 * FROM Users WHERE Username=@userName"; 
+                cmd.CommandText = "SELECT TOP 1 * FROM Users WHERE Username=@userName";
                 cmd.Connection = connection;
                 using (SqlDataReader oReader = cmd.ExecuteReader()) {
-                    if (oReader.Read())
+                    if (oReader.Read()) {
                         userHashSalt = new HashSalt { Hash = oReader["Hash"].ToString(), Salt = oReader["Salt"].ToString() };
+                        user.id = (int)oReader["Id"];
+                    }
                     else {
                         MessageBox.Show("User or password invalid (testing: no user)");
                         return;
                     }
                 }
 
-                connection.Close();
+
+                bool isPasswordMatched = HashSalt.VerifyPassword(passwordTextBox.Text, userHashSalt.Hash, userHashSalt.Salt);
+
+                if (isPasswordMatched) {
+                    MessageBox.Show("(testing: Password match!)");
+                    StartTimer();
+                    cmd.Parameters.AddWithValue("@userId", user.id);
+                    cmd.Parameters.AddWithValue("@enterTime", user.connectedTime);
+                    cmd.CommandText = "INSERT INTO Attendance(EnterTime,UserId) Values(@enterTime,@userId); SELECT SCOPE_IDENTITY();";
+                    //var asdf  = cmd.ExecuteNonQuery();
+                    user.attendanceId = int.Parse(cmd.ExecuteScalar().ToString());
+                }
+                else {
+                    MessageBox.Show("User or password invalid (testing:Password invalid!)");
+                    return;
+                }
             }
-
-
-            bool isPasswordMatched = HashSalt.VerifyPassword(passwordTextBox.Text, userHashSalt.Hash, userHashSalt.Salt);
-
-            if (isPasswordMatched) {
-                MessageBox.Show("User or password invalid (testing: Password match!)");
-            }
-            else {
-                MessageBox.Show("User or password invalid (testing:Password invalid!)");
-                return;
-            }
-
             LogInLabel.Text = DateTime.Now.ToString();
-            StartTimer();
+            statusLabel.ForeColor = Color.LimeGreen;
+            statusLabel.Text = "User Online!";
         }
 
         private void logoutButtonClicked(object sender, EventArgs e) {
+            var cmd = new SqlCommand();
+            if (user.id != 0 && (DateTime.Now - user.connectedTime).TotalHours <= 12)
+                using (SqlConnection connection = new SqlConnection(MyConString)) {
+                    connection.Open();
+
+                    cmd.Parameters.AddWithValue("@exitTime", DateTime.Now);
+                    cmd.Parameters.AddWithValue("@id", user.attendanceId);
+                    cmd.CommandText = "UPDATE Attendance SET ExitTime=@exitTime  WHERE Id=@id;";
+                    cmd.Connection = connection;
+                    cmd.ExecuteNonQuery();
+                }
+            else
+                MessageBox.Show("Not login or more then 12 hours!");
+            statusLabel.ForeColor = Color.Red;
+            statusLabel.Text = "User Offine!";
             LogOutLabel.Text = DateTime.Now.ToString();
-            userTimer.Enabled = false;
+            user.timer.Enabled = false;
         }
 
         private void signupButtonClicked(object sender, EventArgs e) {
@@ -108,13 +124,10 @@ namespace dxcEx {
                 } catch (SqlException ex) {
                     if (ex.Number == 2601 || ex.Number == 2627) {
                         MessageBox.Show("User already exist!");
-                        connection.Close();
                         return;
                     }
                 }
-
                 MessageBox.Show("New user added!");
-                connection.Close();
             }
         }
 
@@ -124,6 +137,9 @@ namespace dxcEx {
 
         private void passwordTextBoxChanged(object sender, EventArgs e) {
 
+        }
+
+        private void label4_Click(object sender, EventArgs e) {
         }
     }
 }

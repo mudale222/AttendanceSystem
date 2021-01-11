@@ -31,7 +31,7 @@ namespace dxcEx {
             this.label2 = new System.Windows.Forms.Label();
             this.loginButton = new System.Windows.Forms.Button();
             this.logoutButton = new System.Windows.Forms.Button();
-            this.label4 = new System.Windows.Forms.Label();
+            this.statusLabel = new System.Windows.Forms.Label();
             this.timer1 = new System.Windows.Forms.Timer(this.components);
             this.TimerLabel = new System.Windows.Forms.Label();
             this.LogInLabel = new System.Windows.Forms.Label();
@@ -100,17 +100,18 @@ namespace dxcEx {
             this.logoutButton.UseVisualStyleBackColor = true;
             this.logoutButton.Click += new System.EventHandler(this.logoutButtonClicked);
             // 
-            // label4
+            // statusLabel
             // 
-            this.label4.AutoSize = true;
-            this.label4.BackColor = System.Drawing.SystemColors.ActiveCaptionText;
-            this.label4.Font = new System.Drawing.Font("Microsoft Sans Serif", 14F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(177)));
-            this.label4.ForeColor = System.Drawing.Color.Red;
-            this.label4.Location = new System.Drawing.Point(656, 25);
-            this.label4.Name = "label4";
-            this.label4.Size = new System.Drawing.Size(112, 24);
-            this.label4.TabIndex = 7;
-            this.label4.Text = "User Offline!";
+            this.statusLabel.AutoSize = true;
+            this.statusLabel.BackColor = System.Drawing.SystemColors.ActiveCaptionText;
+            this.statusLabel.Font = new System.Drawing.Font("Microsoft Sans Serif", 14F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(177)));
+            this.statusLabel.ForeColor = System.Drawing.Color.Red;
+            this.statusLabel.Location = new System.Drawing.Point(656, 25);
+            this.statusLabel.Name = "statusLabel";
+            this.statusLabel.Size = new System.Drawing.Size(112, 24);
+            this.statusLabel.TabIndex = 7;
+            this.statusLabel.Text = "User Offline!";
+            this.statusLabel.Click += new System.EventHandler(this.label4_Click);
             // 
             // TimerLabel
             // 
@@ -188,7 +189,7 @@ namespace dxcEx {
             this.Controls.Add(this.LogOutLabel);
             this.Controls.Add(this.LogInLabel);
             this.Controls.Add(this.TimerLabel);
-            this.Controls.Add(this.label4);
+            this.Controls.Add(this.statusLabel);
             this.Controls.Add(this.logoutButton);
             this.Controls.Add(this.loginButton);
             this.Controls.Add(this.passwordTextBox);
@@ -211,7 +212,7 @@ namespace dxcEx {
         private System.Windows.Forms.Label label2;
         private System.Windows.Forms.Button loginButton;
         private System.Windows.Forms.Button logoutButton;
-        private System.Windows.Forms.Label label4;
+        private System.Windows.Forms.Label statusLabel;
         private System.Windows.Forms.Timer timer1;
         private System.Windows.Forms.Label TimerLabel;
         private System.Windows.Forms.Label LogInLabel;

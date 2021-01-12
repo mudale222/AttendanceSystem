@@ -11,10 +11,13 @@ using System.Windows.Forms;
 
 namespace dxcEx {
     public partial class LoginForm : Form {
-        const string MyConString = "Data Source=(LocalDB)\\MSSQLLocalDB;AttachDbFilename=C:\\Users\\mudale\\source\\repos\\dxcEx\\dxcEx\\MainDb.mdf;Integrated Security=True;";
         User user = new User();
         public LoginForm() {
             InitializeComponent();
+            this.Icon = new Icon(Uti.folderUrl +"\\icon.ico");
+            Image myimage = new Bitmap(Uti.folderUrl + "\\background.png");
+            this.BackgroundImage = myimage;
+            this.BackgroundImageLayout = System.Windows.Forms.ImageLayout.Stretch;
         }
 
         private void LoginForm_Load(object sender, EventArgs e) {
@@ -29,11 +32,7 @@ namespace dxcEx {
 
         void t_Tick(object sender, EventArgs e) {
             var time_span = (DateTime.Now - user.connectedTime);
-            var hh = time_span.Hours;
-            var mm = time_span.Minutes;
-            var ss = time_span.Seconds;
-
-            TimerLabel.Text = string.Format("{0}:{1}:{2}", hh, mm, ss);
+            TimerLabel.Text = Uti.FormatTime(time_span);
         }
 
         private void loginButtonClicked(object sender, EventArgs e) {
@@ -41,7 +40,7 @@ namespace dxcEx {
             var userName = userNameTextBox.Text;
             var userHashSalt = new HashSalt();
 
-            using (SqlConnection connection = new SqlConnection(MyConString)) {
+            using (SqlConnection connection = new SqlConnection(Uti.CONSTRING)) {
                 connection.Open();
 
                 cmd.Parameters.AddWithValue("@userName", userName);
@@ -53,7 +52,7 @@ namespace dxcEx {
                         user.id = (int)oReader["Id"];
                     }
                     else {
-                        MessageBox.Show("User or password invalid (testing: no user)");
+                        MessageBox.Show("User or password invalid!"/*no user*/);
                         return;
                     }
                 }
@@ -62,28 +61,37 @@ namespace dxcEx {
                 bool isPasswordMatched = HashSalt.VerifyPassword(passwordTextBox.Text, userHashSalt.Hash, userHashSalt.Salt);
 
                 if (isPasswordMatched) {
-                    MessageBox.Show("(testing: Password match!)");
+                    MessageBox.Show("Login success!"/*password match*/);
                     StartTimer();
                     cmd.Parameters.AddWithValue("@userId", user.id);
                     cmd.Parameters.AddWithValue("@enterTime", user.connectedTime);
                     cmd.CommandText = "INSERT INTO Attendance(EnterTime,UserId) Values(@enterTime,@userId); SELECT SCOPE_IDENTITY();";
-                    //var asdf  = cmd.ExecuteNonQuery();
                     user.attendanceId = int.Parse(cmd.ExecuteScalar().ToString());
                 }
                 else {
-                    MessageBox.Show("User or password invalid (testing:Password invalid!)");
+                    MessageBox.Show("User or password invalid!"/*Password invalid!*/);
                     return;
                 }
             }
             LogInLabel.Text = DateTime.Now.ToString();
             statusLabel.ForeColor = Color.LimeGreen;
             statusLabel.Text = "User Online!";
+            if (userName == "adminadmin")
+                using (var adminForm = new AdminForm())
+                    adminForm.ShowDialog();
         }
 
         private void logoutButtonClicked(object sender, EventArgs e) {
+            var isClosing = false;
+            try {
+                var x = ((FormClosingEventArgs)e);
+                isClosing = true;
+            }
+            catch (Exception ex) { }
+
             var cmd = new SqlCommand();
             if (user.id != 0 && (DateTime.Now - user.connectedTime).TotalHours <= 12)
-                using (SqlConnection connection = new SqlConnection(MyConString)) {
+                using (SqlConnection connection = new SqlConnection(Uti.CONSTRING)) {
                     connection.Open();
 
                     cmd.Parameters.AddWithValue("@exitTime", DateTime.Now);
@@ -91,13 +99,14 @@ namespace dxcEx {
                     cmd.CommandText = "UPDATE Attendance SET ExitTime=@exitTime  WHERE Id=@id;";
                     cmd.Connection = connection;
                     cmd.ExecuteNonQuery();
+                    LogOutLabel.Text = DateTime.Now.ToString();
+                    user.timer.Enabled = false;
                 }
-            else
+            else if (!isClosing)
                 MessageBox.Show("Not login or more then 12 hours!");
             statusLabel.ForeColor = Color.Red;
-            statusLabel.Text = "User Offine!";
-            LogOutLabel.Text = DateTime.Now.ToString();
-            user.timer.Enabled = false;
+            statusLabel.Text = "User Offline!";
+            user = new User();
         }
 
         private void signupButtonClicked(object sender, EventArgs e) {
@@ -111,7 +120,7 @@ namespace dxcEx {
 
             HashSalt hashSalt = HashSalt.GenerateSaltedHash(64, password);
 
-            using (SqlConnection connection = new SqlConnection(MyConString)) {
+            using (SqlConnection connection = new SqlConnection(Uti.CONSTRING)) {
                 connection.Open();
 
                 cmd.Parameters.AddWithValue("@userName", userName);
@@ -140,6 +149,14 @@ namespace dxcEx {
         }
 
         private void label4_Click(object sender, EventArgs e) {
+        }
+
+        private void label5_Click(object sender, EventArgs e) {
+
+        }
+
+        private void LoginForm_FormClosing(object sender, FormClosingEventArgs e) {
+            logoutButtonClicked(sender,e);
         }
     }
 }

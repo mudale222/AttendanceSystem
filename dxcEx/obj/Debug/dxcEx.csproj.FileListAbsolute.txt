@@ -35,3 +35,4 @@ C:\Users\mudale\source\repos\dxcEx\dxcEx\bin\Debug\System.Memory.xml
 C:\Users\mudale\source\repos\dxcEx\dxcEx\bin\Debug\System.Numerics.Vectors.xml
 C:\Users\mudale\source\repos\dxcEx\dxcEx\bin\Debug\System.Runtime.CompilerServices.Unsafe.xml
 C:\Users\mudale\source\repos\dxcEx\dxcEx\obj\Debug\dxcEx.csproj.CopyComplete
+C:\Users\mudale\source\repos\dxcEx\dxcEx\obj\Debug\dxcEx.AdminForm.resources
